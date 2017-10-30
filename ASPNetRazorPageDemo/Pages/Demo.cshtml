@@ -1,0 +1,74 @@
+﻿@page
+@model ASPNetRazorPageDemo.Pages.DemoModel
+@{
+    ViewData["Title"] = "Demo";
+}
+<h2>This is coming from initial load - <span style="color:blueviolet;">@Model.Message</span></h2>
+<h2>Get Request Result on Load</h2>
+<div id="dvItems" style="font-size:24px;">
+</div>
+<h2>Post these values</h2>
+Value 1: <input type="text" id="txtItem1" value="ASP.NET" /><br />
+Value 2: <input type="text" id="txtItem2" value="ASP.NET Core" /><br />
+Value 3: <input type="text" id="txtItem3" value="C#" /><br /><br />
+<input type="button" id="btnPost" value="Post Values">
+<br />
+@Html.AntiForgeryToken()
+<h2 style="color:brown;">Result after Ajax Post</h2>
+<div id="dvPostItems">
+</div>
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script type="text/javascript" language="JavaScript">
+        $(document).ready(function () {
+            $.ajax({
+                type: "GET",
+                url: "/Demo?handler=List",
+                contentType: "application/json",
+                dataType: "json",
+                success: function (response) {
+                    var dvItems = $("#dvItems");
+                    dvItems.empty();
+                    $.each(response, function (i, item) {
+                        var $tr = $('<li>').append(item).appendTo(dvItems);
+                    });
+                },
+                failure: function (response) {
+                    alert(response);
+                }
+            });
+            $('#btnPost').on('click', function () {
+                var item1 = $('#txtItem1').val();
+                var item2 = $('#txtItem2').val();
+                var item3 = $('#txtItem3').val();
+                $.ajax({
+                    type: "POST",
+                    url: "/Demo?handler=Send",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("XSRF-TOKEN",
+                            $('input:hidden[name="__RequestVerificationToken"]').val());
+                    },
+                    data: JSON.stringify({
+                        Item1: item1,
+                        Item2: item2,
+                        Item3: item3
+                    }),
+
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (response) {
+                        var dvItems = $("#dvPostItems");
+                        dvItems.empty();
+                        $.each(response, function (i, item) {
+                            var $tr = $('<li>').append(item).appendTo(dvItems);
+                        });
+                    },
+                    failure: function (response) {
+                        alert(response);
+                    }
+                });
+            })
+
+        });
+    </script>
+}
